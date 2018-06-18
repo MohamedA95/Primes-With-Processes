@@ -10,22 +10,21 @@ import math
 import sys
 
 
-def calculate(number, s, e, q):
+def calculate(number, start, end, q):
     """Takes a group and divides the number by all the numbers in this group
+
     We only need to divide by odd numbers so if the start is even make it odd.
-    :returns a list
-    the first item is 'd' if the number is not prime and the second is the divisor
+    puts a tuple in the queue, the first item is 'd' if the number is not prime and the second is the divisor
      if the number is prime it returns true
     """
 
-    if s % 2 == 0:
-        s += 1
-    for i in range(s, 1 + e, 2):
+    if start % 2 == 0:
+        start += 1
+    for i in range(start, 1 + end, 2):
         if number % i == 0:
-            q.put(['d', i])
+            q.put(('d', i))
             return
-    q.put([True])
-    return
+    q.put((True, 11))
 
 
 def isprime(number, proc):
@@ -35,33 +34,33 @@ def isprime(number, proc):
      :returns
      -1 if the number is prime
      -2 if the number is even
-     else it returns the number that the input is dividable by
+     else it returns the number that the input is divisible by
      """
     q = mp.Queue()
-    process = []
-    finishedProc = 0
-    GroubStart = 3
+    process = ()
+    finished_proc = 0
+    group_start = 3
     if number == 1:
         return 1
     if number == 2:
         return -1
     if number % 2 == 0:
         return -2
-    maxDiv = math.ceil(math.sqrt(number))
-    GroupSize = math.ceil((maxDiv - 3) / proc)
-    GroupEnd = GroubStart + GroupSize
-    if GroupSize <= proc:
+    max_div = math.ceil(math.sqrt(number))
+    group_size = math.ceil((max_div - 3) / proc)
+    group_end = group_start + group_size
+    if group_size <= proc:
         calculate(number, 3, number - 1, q, )
-        finishedProc=proc-1
+        finished_proc = proc - 1
     else:
         for i in range(proc):
-            p = mp.Process(target=calculate, args=(number, GroubStart, GroupEnd, q,))
+            p = mp.Process(target=calculate, args=(number, group_start, group_end, q,))
             p.start()
-            process.append(p)
-            GroubStart += GroupSize
-            GroupEnd += GroupSize
-            if GroupEnd == number:
-                GroupEnd -= 1
+            process = process + (p,)
+            group_start += group_size
+            group_end += group_size
+            if group_end == number:
+                group_end -= 1
 
     while True:
         if q.qsize() > 0:
@@ -71,8 +70,8 @@ def isprime(number, proc):
                     i.terminate()
                 return val[1]
             elif val[0]:
-                finishedProc += 1
-                if finishedProc == proc:
+                finished_proc += 1
+                if finished_proc == proc:
                     for i in process:
                         i.terminate()
                     return -1
